@@ -34,6 +34,13 @@ int main(int argc, char **argv){
         htable h;
         char word[256];
 	/* Process command line options */
+        f.tree = 0;
+        f.double_hash = 0;
+        f.entire_contents_printed = 0;
+        f.output_dot = 0;
+        f.print_stats = 0;
+        f.red_black = 0;
+        f.table_size = 0;
 	while((option = getopt(argc, argv, optstring)) != EOF) {
 		switch (option) {
 			case 'T':
@@ -70,9 +77,13 @@ int main(int argc, char **argv){
 
         /* Setup the data structure (hash or bst/rbt) */
         if (f.tree == 0){
-                h = htable_new(DEFAULT_TABLE_SIZE);
+                if (f.table_size > 0){
+                       h = htable_new(find_greater_prime(f.table_size));
+                } else {
+                        h = htable_new(DEFAULT_TABLE_SIZE);
+                }
                 if (f.double_hash == 1){
-                        /* h->method = DOUBLE_H; */
+                        htable_set_double_hashing(h);
                 }
         }else{
                 /* create and setup tree */
@@ -86,7 +97,11 @@ int main(int argc, char **argv){
                         /* insert into tree */
                 }
 	}
-
+        
+        if (f.tree == 0){
+                htable_print(h, stdout);
+                htable_free(h);
+        }
 
 	return EXIT_SUCCESS;
 }

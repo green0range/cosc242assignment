@@ -29,6 +29,27 @@ int getword(char *s, int limit, FILE *stream){
 	return w-s;
 }
 
+int is_prime(int p){
+        int i;
+        for (i=2; i< p/2 + 1; i++){
+                if (p % i == 0){
+                        return 0;
+                }
+        }
+        return 1;
+}
+
+/* Returns a prime number greater than n
+ *
+ * @params n the number the prime must be >= to.
+ */
+int find_greater_prime(int n){
+       int i = n;
+       while (is_prime(i) == 0){
+               i++;
+       }
+       return i;
+}
 void print_help(){
         printf("Options:\n");
         printf("    -T Use tree data structure (hash table is default)\n");

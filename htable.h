@@ -13,5 +13,6 @@ extern void htable_print(htable h, FILE *stream);
 extern int htable_search(htable h, char *str);
 extern void htable_print_entire_table(htable h);
 extern void htable_print_stats(htable h, FILE *stream, int num_stats);
+extern void htable_set_double_hashing(htable h);
 
 #endif

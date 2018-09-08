@@ -13,6 +13,10 @@ struct htablerec {
         hashing_t method;
 };
 
+/* Frees the entire hash table from memory
+ *
+ * @params h the htable to free
+ */
 void htable_free(htable h){
 	int i;
 	for (i=0; i<h->capacity; i++){
@@ -25,6 +29,11 @@ void htable_free(htable h){
 	free(h);
 }
 
+/* Convert as a word to a integer.
+ * This lets it be used a a htable key
+ *
+ * @params word pointer to an array of chars to convert
+ */
 static unsigned int htable_word_to_int(char *word){
 	unsigned int result = 0;
 	while (*word != '\0'){
@@ -33,15 +42,51 @@ static unsigned int htable_word_to_int(char *word){
 	return result;
 }
 
+/* Enters data into the hash table using linear
+ * probing. Uses the formula:
+ * H(k, i) = (h(k) + i) % m
+ * Where h(k) = k % m
+ *
+ * @params ht the htable to use
+ * @params str the char array to enter.
+ */
 int linear_probing(htable ht, char *str){
-
+        unsigned int h, k, fhash;
+        int i = 0;
+        for(;;){
+                k = htable_word_to_int(str);
+                h = k % ht->capacity;
+                fhash = (h + i) % ht->capacity;
+                if (ht->freqs[h] == 0){
+                        break; /* empty slot */
+                } else if (strcmp(ht->keys[h], str) == 0){
+                        break; /* duplicate */
+                } else {
+                        i++;
+                }
+                if (i > ht->capacity){
+                        return 0;
+                }
+        }
+	ht->freqs[fhash]++;
+	ht->keys[fhash] = emalloc((strlen(str)+1) * sizeof ht->keys[0]);
+	strcpy(ht->keys[fhash], str);
+	if (ht->freqs[fhash] == 1){ /* only increment num_keys if new item, not duplicate */
+		ht->num_keys++;
+	}
+        return 1;
 }
 
+/* Enters data into the hash table using double 
+ * hashing. This method uses the formula:
+ * H(k,i) = (h(k) + i * g(k)) % m
+ * where h(k) = k % m
+ * and g(k) = 1 + k % (m - 1)
+ *
+ * @params ht htable to use
+ * @params str string to enter
+ */
 int double_hash(htable ht, char *str){
-	/* Let's use H(k,i) = (h(k) + i * g(k)) % m
-	 * h(k) = k % m;  g(k) = 1 + k % (m-1)
-	 * Because double the hash, double the fun 
-	 * (and less clustering) */
 	unsigned int fhash, h, g, k;
 	int i=0, j;
 	for (;;){
@@ -53,8 +98,8 @@ int double_hash(htable ht, char *str){
 		fhash = (h + (i * g)) % ht->capacity;
 		if (ht->freqs[fhash] == 0){
 			break; /* found an empty slot */
-		}else if (strcmp(ht->keys[fhash], str) == 0){ /* weird function that returns 0 if true */
-			break; /* already contains this data, reinsert and increment freqs */	
+		}else if (strcmp(ht->keys[fhash], str) == 0){ 
+			break; /* already contains this data */	
 		}else{
 			i++;
 		}
@@ -69,9 +114,13 @@ int double_hash(htable ht, char *str){
 	if (ht->freqs[fhash] == 1){ /* only increment num_keys if new item, not duplicate */
 		ht->num_keys++;
 	}
+        return 1;
 }
 
 /* Inserts a new value into the hash table
+ * This passes the insertion role to either
+ * linear_probing or double_hash depending
+ * on the set options
  *
  * @param ht The hash table to insert into
  * @param str The string to insert
@@ -79,30 +128,44 @@ int double_hash(htable ht, char *str){
 int htable_insert(htable ht, char *str){
         if (ht->method == LINEAR_P){
                 return linear_probing(ht, str);
-        }else if (ht->method == DOUBLE_H){
+        }else{
                 return double_hash(ht, str);
         }
 }
 
+/* Creates and return a new htable
+ *
+ * @params capacity maximum size of the hash table.
+ */
 htable htable_new(int capacity){
 	htable result = emalloc(capacity * sizeof result);
 	result->capacity = capacity;
 	result->num_keys = 0;
+        result->method = LINEAR_P;
 	result->keys = emalloc(result->capacity * sizeof result->keys[0]);
 	result->freqs = emalloc(result->capacity * sizeof result->freqs[0]);
 	return result;
+}
+
+void htable_set_double_hashing(htable h){
+        h->method = DOUBLE_H;
 }
 
 void htable_print(htable h, FILE *stream){
 	int i;
 	for (i=0; i<h->capacity; i++){
 		if (h->freqs[i] > 0){
-			fprintf(stream, "%s %d\n", h->keys[i], h->freqs[i]);
+			fprintf(stream, "%d    %s\n", h->freqs[i], h->keys[i]);
 		}
 	}
-	fprintf(stream, "Total keys: %d\n", h->num_keys);
 }
 
+/* Searches for a particular word in the
+ * hash table. Returns 1 if found, 0 if not.
+ *
+ * @params ht htable to search in
+ * @params str string to search for
+ */
 int htable_search(htable ht, char *str){
 	unsigned int fhash, h, g, k;
 	int i=0, j;
