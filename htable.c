@@ -68,6 +68,7 @@ int linear_probing(htable ht, char *str){
                         return 0;
                 }
         }
+        ht->stats[ht->num_keys] = i;
 	ht->freqs[fhash]++;
 	ht->keys[fhash] = emalloc((strlen(str)+1) * sizeof ht->keys[0]);
 	strcpy(ht->keys[fhash], str);
@@ -88,7 +89,7 @@ int linear_probing(htable ht, char *str){
  */
 int double_hash(htable ht, char *str){
 	unsigned int fhash, h, g, k;
-	int i=0, j;
+	int i=0; 
 	for (;;){
 		/* Convert to a number */
 		k = htable_word_to_int(str);
@@ -108,6 +109,7 @@ int double_hash(htable ht, char *str){
 			return 0;
 		}
 	}
+        ht->stats[ht->num_keys] = i;
 	ht->freqs[fhash]++;
 	ht->keys[fhash] = emalloc((strlen(str)+1) * sizeof ht->keys[0]);
 	strcpy(ht->keys[fhash], str);
@@ -141,6 +143,7 @@ htable htable_new(int capacity){
 	htable result = emalloc(capacity * sizeof result);
 	result->capacity = capacity;
 	result->num_keys = 0;
+        result->stats = emalloc(capacity * sizeof result->stats[0]);
         result->method = LINEAR_P;
 	result->keys = emalloc(result->capacity * sizeof result->keys[0]);
 	result->freqs = emalloc(result->capacity * sizeof result->freqs[0]);
@@ -162,13 +165,15 @@ void htable_print(htable h, FILE *stream){
 
 /* Searches for a particular word in the
  * hash table. Returns 1 if found, 0 if not.
+ * TODO: currently this only searches using double
+ * hashing. Implement linear probing search.
  *
  * @params ht htable to search in
  * @params str string to search for
  */
 int htable_search(htable ht, char *str){
 	unsigned int fhash, h, g, k;
-	int i=0, j;
+	int i=0;
 	for (;;){
 		/* Convert to a number */
 		k = htable_word_to_int(str);
@@ -195,11 +200,14 @@ int htable_search(htable ht, char *str){
  */
 void htable_print_entire_table(htable h){
         int i = 0;
-        while (i < h->capacity && i < h->num_keys){
+        printf("  Pos  Freq  Stats  Word\n");
+        printf("----------------------------------------\n");
+        for (i=0; i<h->capacity; i++){
                 if (h->keys[i] != NULL){
-                        printf("%s\n", h->keys[i]);
+                        fprintf(stderr, "%5d %5d %5d   %s\n", i, h->freqs[i], h->stats[i], h->keys[i]);
+                }else{
+                        fprintf(stderr, "%5d %5d %5d\n", i, h->freqs[i], h->stats[i]);
                 }
-                i++;
         }
 }
 

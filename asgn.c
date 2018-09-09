@@ -18,7 +18,7 @@ struct flags {
 	int output_dot;
 	int print_stats;
 	int red_black;
-	char *s;
+	int snapshot_count;
 	int table_size;
 };
 
@@ -33,6 +33,7 @@ int main(int argc, char **argv){
 	struct flags f;
         htable h;
         char word[256];
+        int num_entries = 0;
 	/* Process command line options */
         f.tree = 0;
         f.double_hash = 0;
@@ -40,6 +41,7 @@ int main(int argc, char **argv){
         f.output_dot = 0;
         f.print_stats = 0;
         f.red_black = 0;
+        f.snapshot_count = 0;
         f.table_size = 0;
 	while((option = getopt(argc, argv, optstring)) != EOF) {
 		switch (option) {
@@ -63,8 +65,9 @@ int main(int argc, char **argv){
                                 break;
                         case 'r':
                                 f.red_black = 1;
+                                break;
                         case 's':
-                                /* Not sure what this means */
+                                f.snapshot_count = atoi(optarg);
                                 break;
                         case 't':
 				f.table_size = atoi(optarg);
@@ -96,10 +99,23 @@ int main(int argc, char **argv){
                 }else{
                         /* insert into tree */
                 }
+                num_entries++;
 	}
         
         if (f.tree == 0){
-                htable_print(h, stdout);
+                if (f.entire_contents_printed == 1){
+                        htable_print_entire_table(h);
+                }
+                if (f.print_stats == 0){
+                        htable_print(h, stdout);
+                }else{
+                        if (f.snapshot_count == 0){
+                                htable_print_stats(h, stdout, num_entries);
+                        }
+                        else{
+                                htable_print_stats(h, stdout, f.snapshot_count);
+                        }
+                }
                 htable_free(h);
         }
 
