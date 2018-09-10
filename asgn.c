@@ -4,6 +4,7 @@
 #include <getopt.h>
 #include "mylib.h"
 #include "htable.h"
+#include "bst.h"
 
 #define DEFAULT_TABLE_SIZE 113
 
@@ -32,6 +33,7 @@ int main(int argc, char **argv){
 	char option;
 	struct flags f;
         htable h;
+	bst b = NULL;
         char word[256];
         int num_entries = 0;
 	/* Process command line options */
@@ -89,7 +91,7 @@ int main(int argc, char **argv){
                         htable_set_double_hashing(h);
                 }
         }else{
-                /* create and setup tree */
+		/* set RBT stuff */
         }
 
         /* get words from stdin */
@@ -97,7 +99,7 @@ int main(int argc, char **argv){
                 if (f.tree == 0){
 		        htable_insert(h, word);
                 }else{
-                        /* insert into tree */
+                        b = bst_insert(b, word);
                 }
                 num_entries++;
 	}
@@ -117,7 +119,9 @@ int main(int argc, char **argv){
                         }
                 }
                 htable_free(h);
-        }
+        }else{
+		bst_inorder(b, bst_print_key);
+	}
 
 	return EXIT_SUCCESS;
 }
