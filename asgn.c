@@ -14,7 +14,7 @@
 struct flags {
 	int tree;
 	char *check_file;
-	int double_hash;
+	hashing_t hashing_method;
 	int entire_contents_printed;
 	int output_dot;
 	int print_stats;
@@ -38,7 +38,7 @@ int main(int argc, char **argv){
         int num_entries = 0;
 	/* Process command line options */
         f.tree = 0;
-        f.double_hash = 0;
+        f.hashing_method = LINEAR_P;
         f.entire_contents_printed = 0;
         f.output_dot = 0;
         f.print_stats = 0;
@@ -54,7 +54,7 @@ int main(int argc, char **argv){
                                 /* f.check_file = emelloc(strlen(optarg) * sizeof f.check_file[0]); */
                                 break;
                         case 'd':
-                                f.double_hash = 1;
+                                f.hashing_method = DOUBLE_H;
                                 break;
                         case 'e':
                                 f.entire_contents_printed = 1;
@@ -83,12 +83,9 @@ int main(int argc, char **argv){
         /* Setup the data structure (hash or bst/rbt) */
         if (f.tree == 0){
                 if (f.table_size > 0){
-                       h = htable_new(find_greater_prime(f.table_size));
+                       h = htable_new(find_greater_prime(f.table_size), f.hashing_method);
                 } else {
-                        h = htable_new(DEFAULT_TABLE_SIZE);
-                }
-                if (f.double_hash == 1){
-                        htable_set_double_hashing(h);
+                        h = htable_new(DEFAULT_TABLE_SIZE, f.hashing_method);
                 }
         }else{
 		/* set RBT stuff */
@@ -99,7 +96,11 @@ int main(int argc, char **argv){
                 if (f.tree == 0){
 		        htable_insert(h, word);
                 }else{
-                        b = bst_insert(b, word);
+                        if (f.red_black == 1){
+                                b = bst_insert(b, word, RBT);
+                        }else{
+                                b = bst_insert(b, word, BST);
+                        }
                 }
                 num_entries++;
 	}
@@ -120,7 +121,7 @@ int main(int argc, char **argv){
                 }
                 htable_free(h);
         }else{
-		bst_inorder(b, bst_print_key);
+		bst_preorder(b, bst_print_key);
 	}
 
 	return EXIT_SUCCESS;

@@ -31,7 +31,7 @@ int getword(char *s, int limit, FILE *stream){
 
 int is_prime(int p){
         int i;
-        for (i=2; i< p/2 + 1; i++){
+        for (i=2; i< p; i++){
                 if (p % i == 0){
                         return 0;
                 }
@@ -48,6 +48,7 @@ int find_greater_prime(int n){
        while (is_prime(i) == 0){
                i++;
        }
+       fprintf(stdout, "using prime %d\n", i);
        return i;
 }
 void print_help(){

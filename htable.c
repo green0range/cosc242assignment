@@ -57,23 +57,24 @@ int linear_probing(htable ht, char *str){
                 k = htable_word_to_int(str);
                 h = k % ht->capacity;
                 fhash = (h + i) % ht->capacity;
-                if (ht->freqs[h] == 0){
+                if (ht->freqs[fhash] == 0){
                         break; /* empty slot */
-                } else if (strcmp(ht->keys[h], str) == 0){
+                } else if (strcmp(ht->keys[fhash], str) == 0){
                         break; /* duplicate */
                 } else {
                         i++;
                 }
                 if (i > ht->capacity){
+                        printf("cannot insert %s\n", str);
                         return 0;
                 }
         }
-        ht->stats[ht->num_keys] = i;
 	ht->freqs[fhash]++;
-	ht->keys[fhash] = emalloc((strlen(str)+1) * sizeof ht->keys[0]);
-	strcpy(ht->keys[fhash], str);
-	if (ht->freqs[fhash] == 1){ /* only increment num_keys if new item, not duplicate */
-		ht->num_keys++;
+	if (ht->freqs[fhash] == 1){ /* If freqs = 1 then this is the first item, not duplicate */
+	        ht->keys[fhash] = emalloc((strlen(str)+1) * sizeof ht->keys[0]);
+	        ht->num_keys++;
+	        strcpy(ht->keys[fhash], str);
+                ht->stats[ht->num_keys] = i;
 	}
         return 1;
 }
@@ -109,12 +110,12 @@ int double_hash(htable ht, char *str){
 			return 0;
 		}
 	}
-        ht->stats[ht->num_keys] = i;
-	ht->freqs[fhash]++;
-	ht->keys[fhash] = emalloc((strlen(str)+1) * sizeof ht->keys[0]);
-	strcpy(ht->keys[fhash], str);
+        ht->num_keys++;
 	if (ht->freqs[fhash] == 1){ /* only increment num_keys if new item, not duplicate */
-		ht->num_keys++;
+		ht->stats[ht->num_keys] = i;
+                ht->freqs[fhash]++;
+	        ht->keys[fhash] = emalloc((strlen(str)+1) * sizeof ht->keys[0]);
+	        strcpy(ht->keys[fhash], str);
 	}
         return 1;
 }
@@ -139,8 +140,9 @@ int htable_insert(htable ht, char *str){
  *
  * @params capacity maximum size of the hash table.
  */
-htable htable_new(int capacity){
+htable htable_new(int capacity, hashing_t t){
 	htable result = emalloc(capacity * sizeof result);
+        result->method = t;
 	result->capacity = capacity;
 	result->num_keys = 0;
         result->stats = emalloc(capacity * sizeof result->stats[0]);
