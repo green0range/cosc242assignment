@@ -3,6 +3,7 @@
 
 typedef struct bstnode *bst;
 typedef enum tree_e { BST, RBT } tree_t;
+typedef enum rbt_colour_e { RED, BLACK } rbt_colour;
 
 extern bst bst_delete(bst b, char *str);
 extern bst bst_free(bst b);

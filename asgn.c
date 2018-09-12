@@ -87,9 +87,8 @@ int main(int argc, char **argv){
                 } else {
                         h = htable_new(DEFAULT_TABLE_SIZE, f.hashing_method);
                 }
-        }else{
-		/* set RBT stuff */
-        }
+        } /* we do not need to setup the bst as this is done automatically when
+             bst_insert is called, if it is passed a NULL pointer. */
 
         /* get words from stdin */
 	while (getword(word, sizeof word, stdin) != EOF){
@@ -123,6 +122,11 @@ int main(int argc, char **argv){
         }else{
 		bst_preorder(b, bst_print_key);
 	}
+        if (f.tree == 0){
+                htable_free(h);
+        }else{
+                bst_free(b);
+        }
 
 	return EXIT_SUCCESS;
 }

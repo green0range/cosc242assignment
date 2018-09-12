@@ -4,12 +4,16 @@
 #include "mylib.h"
 #include <string.h>
 
+#define IS_BLACK(x) ((NULL == (x)) || (BLACK == (x)->colour))
+#define IS_RED(x) ((NULL !=(x)) && (RED == (x)->colour))
+
 struct bstnode{
 	char *key;
 	bst left;
 	bst right;
         int freq;
         tree_t type;
+        rbt_colour colour;
 };
 
 /* Finds are returns the leftmost child.
@@ -90,24 +94,107 @@ void bst_preorder(bst b, void f(char *str, int a)){
 	}
 }
 
+/* return the right rotation of r */
+bst right_rotate(bst r){
+        bst tmp = r;
+        bst tmp2 = NULL;
+        r = r->left;
+        tmp2 = r->right;
+        r->right = tmp;
+        r->right->left = tmp2;
+        return r;
+}
+
+/* return the left rotation of r */
+bst left_rotate(bst r){
+        bst tmp = r;
+        bst tmp2;
+        r = r->left;
+        tmp2 = r->right;
+        r->left = tmp;
+        r->left->right = tmp2;
+        return r;
+}
+
+/* This restores the red black conditions of the bst.
+ *
+ * @param b red black binary search tree to fix.
+ */
+bst rbt_fixup(bst r){
+        printf("fixup key: %s\n", r->key);
+        /* Case 1: if left child and left's left child are red */
+        if (IS_RED(r->left) && IS_RED(r->left->left)){
+                if (IS_RED(r->right)){ /* sibling red */
+                        r->colour = RED;
+                        r->left->colour = BLACK;
+                        r->right->colour = BLACK;
+                }else if(IS_BLACK(r->right)){ /* sibling black */
+                        r->colour = RED;
+                        r = right_rotate(r);
+                        r->colour = BLACK;
+                }
+        }
+        /* Case 2: if left child and left's right child are red */
+        else if(IS_RED(r->left) && IS_RED(r->left->right)){
+                if (IS_RED(r->right)){ /* sibling red */
+                        r->colour = RED;
+                        r->left->colour = BLACK;
+                        r->right->colour = BLACK;
+                }else if(IS_BLACK(r->right)){
+                        r->colour = RED;
+                        r->left = left_rotate(r->left);
+                        r = right_rotate(r);
+                        r->colour = BLACK;
+                }
+        }
+        /* Case 3: if right child and right's left child are red */
+        else if(IS_RED(r->right) && IS_RED(r->right->left)){
+                if (IS_RED(r->left)){
+                        r->colour = RED;
+                        r->left->colour = BLACK;
+                        r->right->colour = BLACK;
+                }else if(IS_BLACK(r->left)){
+                        r->right = right_rotate(r->right);
+                        r->colour = RED;
+                        r = left_rotate(r);
+                        r->colour = BLACK;
+                }
+        }
+        /* Case 4: if right child and right's right child are red */
+        else if(IS_RED(r->right) && IS_RED(r->right->right)){
+                if (IS_RED(r->left)){
+                        r->colour = RED;
+                        r->right->colour = BLACK;
+                        r->left->colour = BLACK;
+                }else if(IS_BLACK(r->left)){
+                        r->colour = RED;
+                        r = left_rotate(r);
+                        r->colour = BLACK;
+                }
+        }
+        return r;
+}
+
 bst bst_insert(bst b, char *str, tree_t t){
 	if (b == NULL){ /* empty tree, base case */
 	        b = bst_new(t);
 		b->key = emalloc((strlen(str)+1) * sizeof b->key[0]);
                 strcpy(b->key, str);
                 b->freq = 1;
+                b->colour = RED;
 		return b;
 	}else if (strcmp(b->key, str) < 0){
 		b->right = bst_insert(b->right, str, t);
-		return b;
 	}else if (strcmp(b->key, str) > 0){
 		b->left = bst_insert(b->left, str, t);
-		return b;
 	}else{
 		/* we have a duplicated item, increase freq */
                 b->freq++;
-		return b;
 	}
+        if (b->type == RBT){
+                rbt_fixup(b);
+        }
+        return b;
 }
 
 bst bst_new(tree_t t){

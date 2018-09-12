@@ -26,6 +26,7 @@ void htable_free(htable h){
 	}
 	free(h->keys);
 	free(h->freqs);
+        free(h->stats);
 	free(h);
 }
 
@@ -141,6 +142,7 @@ int htable_insert(htable ht, char *str){
  * @params capacity maximum size of the hash table.
  */
 htable htable_new(int capacity, hashing_t t){
+        int i;
 	htable result = emalloc(capacity * sizeof result);
         result->method = t;
 	result->capacity = capacity;
@@ -149,6 +151,10 @@ htable htable_new(int capacity, hashing_t t){
         result->method = LINEAR_P;
 	result->keys = emalloc(result->capacity * sizeof result->keys[0]);
 	result->freqs = emalloc(result->capacity * sizeof result->freqs[0]);
+        /* initialise freqs array to avoid uninialised error */
+        for (i=0; i<result->capacity; i++){
+                result->freqs[i] = 0;
+        }
 	return result;
 }
 
@@ -167,8 +173,6 @@ void htable_print(htable h, FILE *stream){
 
 /* Searches for a particular word in the
  * hash table. Returns 1 if found, 0 if not.
- * TODO: currently this only searches using double
- * hashing. Implement linear probing search.
  *
  * @params ht htable to search in
  * @params str string to search for
@@ -177,16 +181,19 @@ int htable_search(htable ht, char *str){
 	unsigned int fhash, h, g, k;
 	int i=0;
 	for (;;){
-		/* Convert to a number */
 		k = htable_word_to_int(str);
-		/* now hash! */
-		h = k % ht->capacity;
-		g = 1 + k % (ht->capacity -1);
-		fhash = (h + (i * g)) % ht->capacity;
+                if (ht->method == LINEAR_P){
+                        h = k % ht->capacity;
+                        fhash = (h + i) % ht->capacity;
+                }else{
+		        h = k % ht->capacity;
+		        g = 1 + k % (ht->capacity -1);
+		        fhash = (h + (i * g)) % ht->capacity;
+                }
 		if (ht->freqs[fhash] == 0){
-			break; /* found an empty slot */
-		}else if (strcmp(ht->keys[fhash], str) == 0){ /* weird function that returns 0 if true */
-			break; /* already contains this data, reinsert and increment freqs */	
+			return 0; /* not here */
+		}else if (strcmp(ht->keys[fhash], str) == 0){
+                        return 1; /* found */
 		}else{
 			i++;
 		}
