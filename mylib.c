@@ -4,6 +4,8 @@
 #include <ctype.h>
 #include <assert.h>
 
+#define DEFAULT_TABLE_SIZE 113
+
 /* Function for getting words from file
  *
  * @param s
@@ -60,6 +62,15 @@ int find_greater_prime(int n){
     }
     fprintf(stdout, "using prime %d\n", i);
     return i;
+}
+
+/* Returns the table size to use */
+int table_size(int s){
+	if (s == 0){
+		return DEFAULT_TABLE_SIZE;
+	}else{
+		return find_greater_prime(s);
+	}
 }
 
 /* Function prints user options for command line arguments.
