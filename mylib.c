@@ -4,13 +4,19 @@
 #include <ctype.h>
 #include <assert.h>
 
+/* Function for getting words from file
+ *
+ * @param s
+ * @param limit
+ * @param stream
+ * @return
+ */
 int getword(char *s, int limit, FILE *stream){
     int c;
     char *w = s;
     assert(limit > 0 && s != NULL && stream != NULL);
     
     while (!isalnum(c = getc(stream)) && EOF != c);
-    
     if (EOF == c){
         return EOF;
     }else if (--limit > 0) {
@@ -56,7 +62,10 @@ int find_greater_prime(int n){
     return i;
 }
 
-/* Function prints user options for command line arguments. */
+/* Function prints user options for command line arguments.
+ *
+ * @param prog_name pointer to charthe name of our program
+ */
 void print_help(char *prog_name){
     printf("Usage: %s [OPTIONS]... <STDIN>\n", prog_name);
     printf("\n");
@@ -79,6 +88,7 @@ void print_help(char *prog_name){
     printf("-t TABLESIZE Use the first prime >= TABLESIZE as htable size\n");
     printf("\n");
     printf("-h           Display this message\n");
+    printf("\n");
 }
 
 /* Standard *emalloc function.
@@ -96,7 +106,7 @@ void *emalloc(size_t s){
 
 /* Standard *erealloc function.
  *
- * @param *p
+ * @param p
  * @param s
  */
 void *erealloc(void *p, size_t s){

@@ -5,123 +5,125 @@
 #include "mylib.h"
 
 struct htablerec {
-	int capacity;
-	int num_keys;
-	int* freqs;
-	char** keys;
-        int* stats;
-        hashing_t method;
+    int capacity;
+    int num_keys;
+    int* freqs;
+    char** keys;
+    int* stats;
+    hashing_t method;
 };
 
-/* Frees the entire hash table from memory
+/* Frees the entire hash table from memory.
  *
  * @params h the htable to free
  */
 void htable_free(htable h){
-	int i;
-	for (i=0; i<h->capacity; i++){
-		if (h->freqs[i] >= 1){
-			free(h->keys[i]);
-		}
-	}
-	free(h->keys);
-	free(h->freqs);
-        free(h->stats);
-	free(h);
+    int i;
+    for (i=0; i<h->capacity; i++){
+        if (h->freqs[i] >= 1){
+            free(h->keys[i]);
+        }
+    }
+    free(h->keys);
+    free(h->freqs);
+    free(h->stats);
+    free(h);
 }
 
 /* Convert as a word to a integer.
  * This lets it be used a a htable key
  *
- * @params word pointer to an array of chars to convert
+ * @param word pointer to an array of chars to convert
  */
 static unsigned int htable_word_to_int(char *word){
-	unsigned int result = 0;
-	while (*word != '\0'){
-		result = (*word++ + 31 * result);
-	}
-	return result;
+    unsigned int result = 0;
+    while (*word != '\0'){
+        result = (*word++ + 31 * result);
+    }
+    return result;
 }
 
-/* Enters data into the hash table using linear
- * probing. Uses the formula:
+/* Enters data into the hash table using linear probing.
+ * Uses the formula:
  * H(k, i) = (h(k) + i) % m
  * Where h(k) = k % m
  *
- * @params ht the htable to use
- * @params str the char array to enter.
+ * @param ht the htable to use
+ * @param str the char array to enter
  */
 int linear_probing(htable ht, char *str){
-        unsigned int h, k, fhash;
-        int i = 0;
-        for(;;){
-                k = htable_word_to_int(str);
-                h = k % ht->capacity;
-                fhash = (h + i) % ht->capacity;
-                if (ht->freqs[fhash] == 0){
-                        break; /* empty slot */
-                } else if (strcmp(ht->keys[fhash], str) == 0){
-                        break; /* duplicate */
-                } else {
-                        i++;
-                }
-                if (i > ht->capacity){
-                        printf("cannot insert %s\n", str);
-                        return 0;
-                }
+    unsigned int h, k, fhash;
+    int i = 0;
+    for(;;){
+        k = htable_word_to_int(str);
+        h = k % ht->capacity;
+        fhash = (h + i) % ht->capacity;
+        if (ht->freqs[fhash] == 0){
+            break; /* empty slot */
+        } else if (strcmp(ht->keys[fhash], str) == 0){
+            break; /* duplicate */
+        } else {
+            i++;
         }
-	ht->freqs[fhash]++;
-	if (ht->freqs[fhash] == 1){ /* If freqs = 1 then this is the first item, not duplicate */
-	        ht->keys[fhash] = emalloc((strlen(str)+1) * sizeof ht->keys[0]);
-	        ht->num_keys++;
-	        strcpy(ht->keys[fhash], str);
-                ht->stats[ht->num_keys] = i;
-	}
-        return 1;
+        if (i > ht->capacity){
+            printf("cannot insert %s\n", str);
+            return 0;
+        }
+    }
+    ht->freqs[fhash]++;
+    if (ht->freqs[fhash] == 1){ /* If freqs = 1 then this is the first item,
+                                   not duplicate */
+        ht->keys[fhash] = emalloc((strlen(str)+1) * sizeof ht->keys[0]);
+        ht->num_keys++;
+        strcpy(ht->keys[fhash], str);
+        ht->stats[ht->num_keys] = i;
+    }
+    return 1;
 }
 
-/* Enters data into the hash table using double 
- * hashing. This method uses the formula:
+/* Enters data into the hash table using double hashing.
+ * This method uses the formula:
  * H(k,i) = (h(k) + i * g(k)) % m
  * where h(k) = k % m
  * and g(k) = 1 + k % (m - 1)
  *
- * @params ht htable to use
- * @params str string to enter
+ * @param ht htable to use
+ * @param str string to enter
  */
 int double_hash(htable ht, char *str){
-	unsigned int fhash, h, g, k;
-	int i=0; 
-	for (;;){
-		/* Convert to a number */
-		k = htable_word_to_int(str);
-		/* now hash! */
-		h = k % ht->capacity;
-		g = 1 + k % (ht->capacity -1);
-		fhash = (h + (i * g)) % ht->capacity;
-		if (ht->freqs[fhash] == 0){
-			break; /* found an empty slot */
-		}else if (strcmp(ht->keys[fhash], str) == 0){ 
-			break; /* already contains this data */	
-		}else{
-			i++;
-		}
-		if (i > ht->capacity){
-			fprintf(stderr, "Error: hash table full, cannot add data.");
-			return 0;
-		}
-	}
-        ht->num_keys++;
-	if (ht->freqs[fhash] == 1){ /* only increment num_keys if new item, not duplicate */
-		ht->stats[ht->num_keys] = i;
-                ht->freqs[fhash]++;
-	        ht->keys[fhash] = emalloc((strlen(str)+1) * sizeof ht->keys[0]);
-	        strcpy(ht->keys[fhash], str);
-	}
-        return 1;
+    unsigned int fhash, h, g, k;
+    int i=0; 
+    for (;;){
+        /* Convert to a number */
+        k = htable_word_to_int(str);
+        /* now hash! */
+        h = k % ht->capacity;
+        g = 1 + k % (ht->capacity -1);
+        fhash = (h + (i * g)) % ht->capacity;
+        if (ht->freqs[fhash] == 0){
+            break; /* found an empty slot */
+        }else if (strcmp(ht->keys[fhash], str) == 0){ 
+            break; /* already contains this data */	
+        }else{
+            i++;
+        }
+        if (i > ht->capacity){
+            fprintf(stderr, "Error: hash table full, cannot add data.");
+            return 0;
+        }
+    }
+    ht->num_keys++;
+    if (ht->freqs[fhash] == 1){ /* only increment num_keys if new item,
+                                   not duplicate */
+        ht->stats[ht->num_keys] = i;
+        ht->freqs[fhash]++;
+        ht->keys[fhash] = emalloc((strlen(str)+1) * sizeof ht->keys[0]);
+        strcpy(ht->keys[fhash], str);
+    }
+    return 1;
 }
 
-/* Inserts a new value into the hash table
+/* Inserts a new value into the hash table.
  * This passes the insertion role to either
  * linear_probing or double_hash depending
  * on the set options
@@ -130,98 +132,98 @@ int double_hash(htable ht, char *str){
  * @param str The string to insert
  */
 int htable_insert(htable ht, char *str){
-        if (ht->method == LINEAR_P){
-                return linear_probing(ht, str);
-        }else{
-                return double_hash(ht, str);
-        }
+    if (ht->method == LINEAR_P){
+        return linear_probing(ht, str);
+    }else{
+        return double_hash(ht, str);
+    }
 }
 
-/* Creates and return a new htable
+/* Creates and return a new htable.
  *
- * @params capacity maximum size of the hash table.
+ * @param capacity maximum size of the hash table.
  */
 htable htable_new(int capacity, hashing_t t){
-        int i;
-	htable result = emalloc(capacity * sizeof result);
-        result->method = t;
-	result->capacity = capacity;
-	result->num_keys = 0;
-        result->stats = emalloc(capacity * sizeof result->stats[0]);
-        result->method = LINEAR_P;
-	result->keys = emalloc(result->capacity * sizeof result->keys[0]);
-	result->freqs = emalloc(result->capacity * sizeof result->freqs[0]);
-        /* initialise freqs array to avoid uninialised error */
-        for (i=0; i<result->capacity; i++){
-                result->freqs[i] = 0;
-        }
-	return result;
+    int i;
+    htable result = emalloc(capacity * sizeof result);
+    result->method = t;
+    result->capacity = capacity;
+    result->num_keys = 0;
+    result->stats = emalloc(capacity * sizeof result->stats[0]);
+    result->method = LINEAR_P;
+    result->keys = emalloc(result->capacity * sizeof result->keys[0]);
+    result->freqs = emalloc(result->capacity * sizeof result->freqs[0]);
+    /* initialise freqs array to avoid uninialised error */
+    for (i=0; i<result->capacity; i++){
+        result->freqs[i] = 0;
+    }
+    return result;
 }
 
 void htable_set_double_hashing(htable h){
-        h->method = DOUBLE_H;
+    h->method = DOUBLE_H;
 }
 
 void htable_print(htable h, FILE *stream){
-	int i;
-	for (i=0; i<h->capacity; i++){
-		if (h->freqs[i] > 0){
-			fprintf(stream, "%d    %s\n", h->freqs[i], h->keys[i]);
-		}
-	}
+    int i;
+    for (i=0; i<h->capacity; i++){
+        if (h->freqs[i] > 0){
+            fprintf(stream, "%d    %s\n", h->freqs[i], h->keys[i]);
+        }
+    }
 }
 
-/* Searches for a particular word in the
- * hash table. Returns 1 if found, 0 if not.
+/* Searches for a particular word in the hash table.
+ * Returns 1 if found, 0 if not.
  *
- * @params ht htable to search in
- * @params str string to search for
+ * @param ht htable to search in
+ * @param str string to search for
  */
 int htable_search(htable ht, char *str){
-	unsigned int fhash, h, g, k;
-	int i=0;
-	for (;;){
-		k = htable_word_to_int(str);
-                if (ht->method == LINEAR_P){
-                        h = k % ht->capacity;
-                        fhash = (h + i) % ht->capacity;
-                }else{
-		        h = k % ht->capacity;
-		        g = 1 + k % (ht->capacity -1);
-		        fhash = (h + (i * g)) % ht->capacity;
-                }
-		if (ht->freqs[fhash] == 0){
-			return 0; /* not here */
-		}else if (strcmp(ht->keys[fhash], str) == 0){
-                        return 1; /* found */
-		}else{
-			i++;
-		}
-	}
-
-	return 0;
+    unsigned int fhash, h, g, k;
+    int i=0;
+    for (;;){
+        k = htable_word_to_int(str);
+        if (ht->method == LINEAR_P){
+            h = k % ht->capacity;
+            fhash = (h + i) % ht->capacity;
+        }else{
+            h = k % ht->capacity;
+            g = 1 + k % (ht->capacity -1);
+            fhash = (h + (i * g)) % ht->capacity;
+        }
+        if (ht->freqs[fhash] == 0){
+            return 0; /* not here */
+        }else if (strcmp(ht->keys[fhash], str) == 0){
+            return 1; /* found */
+        }else{
+            i++;
+        }
+    }
+    
+    return 0;
 }
 
 /* Prints the entire hash table.
  * Each entry is printed on a new line.
  * 
- * @params h the hash table to print.
+ * @params h the hash table to print
  */
 void htable_print_entire_table(htable h){
-        int i = 0;
-        printf("  Pos  Freq  Stats  Word\n");
-        printf("----------------------------------------\n");
-        for (i=0; i<h->capacity; i++){
-                if (h->keys[i] != NULL){
-                        fprintf(stderr, "%5d %5d %5d   %s\n", i, h->freqs[i], h->stats[i], h->keys[i]);
-                }else{
-                        fprintf(stderr, "%5d %5d %5d\n", i, h->freqs[i], h->stats[i]);
-                }
+    int i = 0;
+    printf("  Pos  Freq  Stats  Word\n");
+    printf("----------------------------------------\n");
+    for (i=0; i<h->capacity; i++){
+        if (h->keys[i] != NULL){
+            fprintf(stderr, "%5d %5d %5d   %s\n", i, h->freqs[i], h->stats[i],
+                    h->keys[i]);
+        }else{
+            fprintf(stderr, "%5d %5d %5d\n", i, h->freqs[i], h->stats[i]);
         }
+    }
 }
 
-/**
- * Prints out a line of data from the hash table to reflect the state
+/* Prints out a line of data from the hash table to reflect the state
  * the table was in when it was a certain percentage full.
  * Note: If the hashtable is less full than percent_full then no data
  * will be printed.
@@ -231,31 +233,30 @@ void htable_print_entire_table(htable h){
  * @param percent_full - the point at which to show the data from.
  */
 static void print_stats_line(htable h, FILE *stream, int percent_full) {
-   int current_entries = h->capacity * percent_full / 100;
-   double average_collisions = 0.0;
-   int at_home = 0;
-   int max_collisions = 0;
-   int i = 0;
-
-   if (current_entries > 0 && current_entries <= h->num_keys) {
-      for (i = 0; i < current_entries; i++) {
-         if (h->stats[i] == 0) {
-            at_home++;
-         } 
-         if (h->stats[i] > max_collisions) {
-            max_collisions = h->stats[i];
-         }
-         average_collisions += h->stats[i];
-      }
+    int current_entries = h->capacity * percent_full / 100;
+    double average_collisions = 0.0;
+    int at_home = 0;
+    int max_collisions = 0;
+    int i = 0;
     
-      fprintf(stream, "%4d %10d %10.1f %10.2f %11d\n", percent_full, 
-              current_entries, at_home * 100.0 / current_entries,
-              average_collisions / current_entries, max_collisions);
-   }
+    if (current_entries > 0 && current_entries <= h->num_keys) {
+        for (i = 0; i < current_entries; i++) {
+            if (h->stats[i] == 0) {
+                at_home++;
+            } 
+            if (h->stats[i] > max_collisions) {
+                max_collisions = h->stats[i];
+            }
+            average_collisions += h->stats[i];
+        }
+        
+        fprintf(stream, "%4d %10d %10.1f %10.2f %11d\n", percent_full, 
+                current_entries, at_home * 100.0 / current_entries,
+                average_collisions / current_entries, max_collisions);
+    }
 }
 
-/**
- * Prints out a table showing what the following attributes were like
+/* Prints out a table showing what the following attributes were like
  * at regular intervals (as determined by num_stats) while the
  * hashtable was being built.
  *
@@ -271,15 +272,15 @@ static void print_stats_line(htable h, FILE *stream, int percent_full) {
  * @param num_stats the maximum number of statistical snapshots to print.
  */
 void htable_print_stats(htable h, FILE *stream, int num_stats) {
-   int i;
-
-   fprintf(stream, "\n%s\n\n", 
-           h->method == LINEAR_P ? "Linear Probing" : "Double Hashing"); 
-   fprintf(stream, "Percent   Current   Percent    Average      Maximum\n");
-   fprintf(stream, " Full     Entries   At Home   Collisions   Collisions\n");
-   fprintf(stream, "-----------------------------------------------------\n");
-   for (i = 1; i <= num_stats; i++) {
-      print_stats_line(h, stream, 100 * i / num_stats);
-   }
-   fprintf(stream, "-----------------------------------------------------\n\n");
+    int i;
+    
+    fprintf(stream, "\n%s\n\n", 
+            h->method == LINEAR_P ? "Linear Probing" : "Double Hashing"); 
+    fprintf(stream, "Percent   Current   Percent    Average      Maximum\n");
+    fprintf(stream, " Full     Entries   At Home   Collisions   Collisions\n");
+    fprintf(stream, "-----------------------------------------------------\n");
+    for (i = 1; i <= num_stats; i++) {
+        print_stats_line(h, stream, 100 * i / num_stats);
+    }
+    fprintf(stream, "-----------------------------------------------------\n\n");
 }
