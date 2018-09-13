@@ -88,6 +88,13 @@ void tree_inorder(tree b, void f(char *str, int a)){
 
 void tree_preorder(tree b, void f(char *str, int a)){
 	if (b != NULL){
+                if (b->type == RBT){
+                        if (IS_BLACK(b)){
+                                printf("black: ");
+                        }else{
+                                printf("red: ");
+                        }
+                }
 		f(b->key, b->freq);
 		tree_preorder(b->left, f);
 		tree_preorder(b->right, f);
@@ -112,65 +119,63 @@ tree left_rotate(tree t)
     return t;
 }
 
+tree swap(tree t) {
+    t->colour = RED;
+    t->left->colour = BLACK;
+    t->right->colour = BLACK;
+    return t;
+}
 
-
-/* This restores the red black conditions of the tree.
- *
- * @param b red black binary search tree to fix.
- */
-tree rbt_fixup(tree r){
-        printf("fixup key: %s\n", r->key);
-        /* Case 1: if left child and left's left child are red */
-        if (IS_RED(r->left) && IS_RED(r->left->left)){
-                if (IS_RED(r->right)){ /* sibling red */
-                        r->colour = RED;
-                        r->left->colour = BLACK;
-                        r->right->colour = BLACK;
-                }else if(IS_BLACK(r->right)){ /* sibling black */
-                        r->colour = RED;
-                        r = right_rotate(r);
-                        r->colour = BLACK;
-                }
+static tree tree_fix(tree t)
+{
+    if(IS_RED(t->left) && IS_RED(t->left->left)){
+        if(IS_RED(t->right)){
+            swap(t);
+        }else if(IS_BLACK(t->right)){
+            /*right rotate root , colour new root (a) black,
+             * and new child(old root) red*/
+            t = right_rotate(t);
+            t->colour = BLACK;
+            t->right->colour = RED;/*old root*/
         }
-        /* Case 2: if left child and left's right child are red */
-        else if(IS_RED(r->left) && IS_RED(r->left->right)){
-                if (IS_RED(r->right)){ /* sibling red */
-                        r->colour = RED;
-                        r->left->colour = BLACK;
-                        r->right->colour = BLACK;
-                }else if(IS_BLACK(r->right)){
-                        r->colour = RED;
-                        r->left = left_rotate(r->left);
-                        r = right_rotate(r);
-                        r->colour = BLACK;
-                }
+        
+    }else if(IS_RED(t->left) && IS_RED(t->left->right)){
+        if(IS_RED(t->right)){
+            swap(t);
         }
-        /* Case 3: if right child and right's left child are red */
-        else if(IS_RED(r->right) && IS_RED(r->right->left)){
-                if (IS_RED(r->left)){
-                        r->colour = RED;
-                        r->left->colour = BLACK;
-                        r->right->colour = BLACK;
-                }else if(IS_BLACK(r->left)){
-                        r->right = right_rotate(r->right);
-                        r->colour = RED;
-                        r = left_rotate(r);
-                        r->colour = BLACK;
-                }
+        else if(IS_BLACK(t->right)){
+            /* Left rotate left child (a), right rotate root (r),
+             * colour new root (d) black and new child (R) red */
+            t->left = left_rotate(t->left);
+            t = right_rotate(t);
+            t->colour = BLACK;
+            t->right->colour = RED;/* old root */
         }
-        /* Case 4: if right child and right's right child are red */
-        else if(IS_RED(r->right) && IS_RED(r->right->right)){
-                if (IS_RED(r->left)){
-                        r->colour = RED;
-                        r->right->colour = BLACK;
-                        r->left->colour = BLACK;
-                }else if(IS_BLACK(r->left)){
-                        r->colour = RED;
-                        r = left_rotate(r);
-                        r->colour = BLACK;
-                }
+        
+    }else if(IS_RED(t->right) && IS_RED(t->right->left)){
+        if(IS_RED(t->left)){
+            swap(t);
+        }else if(IS_BLACK(t->left)){
+            /* Right rotate right child(b),left rotate root(r),
+             * colour new root (e) black and new child (r) red */
+            t->right = right_rotate(t->right);
+            t = left_rotate(t);
+            t->colour = BLACK;
+            t->left->colour = RED;/* old root */
         }
-        return r;
+        
+    }else if(IS_RED(t->right) && IS_RED(t->right->right)){
+        if(IS_RED(t->left)){
+            swap(t);
+        }
+        else if(IS_BLACK(t->left)){
+            /* Left rotate root R, colour new root b black and new child R red */
+            t = left_rotate(t);
+            t->colour = BLACK;
+            t->left->colour = RED;/*old root*/
+        }
+    }
+    return t;
 }
 
 tree tree_insert(tree b, char *str, tree_t t){
@@ -190,7 +195,7 @@ tree tree_insert(tree b, char *str, tree_t t){
                 b->freq++;
 	}
         if (b->type == RBT){
-                rbt_fixup(b);
+                b = tree_fix(b);
         }
         return b;
 }
