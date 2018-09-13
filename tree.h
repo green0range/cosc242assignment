@@ -14,5 +14,6 @@ extern void tree_preorder(tree b, void f(char *str, int f));
 extern int tree_search(tree b, char *str);
 extern void tree_print_key(char *str, int f);
 extern void tree_output_dot(tree t, FILE *out);
+extern tree tree_make_black(tree t);
 
 #endif

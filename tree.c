@@ -224,7 +224,7 @@ static tree tree_fix(tree t){
  */
 tree tree_make_black(tree t){
 	t->colour = BLACK;
-	return t
+	return t;
 }
 
 /* Tree insert function. Allocates memory.

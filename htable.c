@@ -110,7 +110,6 @@ int double_hash(htable ht, char *str){
             i++;
         }
         if (i > ht->capacity){
-            fprintf(stderr, "Error: hash table full, cannot add data.");
             return 0;
         }
     }
