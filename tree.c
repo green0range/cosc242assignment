@@ -335,5 +335,5 @@ void tree_output_dot(tree t, FILE *out) {
  * @param f
  */
 void tree_print_key(char *s, int f){
-    printf("%d    %s\n",f, s);
+    printf("%-5d%s\n",f, s);
 }

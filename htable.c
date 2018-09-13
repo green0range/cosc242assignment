@@ -56,8 +56,8 @@ static unsigned int htable_word_to_int(char *word){
 int linear_probing(htable ht, char *str){
     unsigned int h, k, fhash;
     int i = 0;
+	k = htable_word_to_int(str);
     for(;;){
-        k = htable_word_to_int(str);
         h = k % ht->capacity;
         fhash = (h + i) % ht->capacity;
         if (ht->freqs[fhash] == 0){
@@ -68,7 +68,6 @@ int linear_probing(htable ht, char *str){
             i++;
         }
         if (i > ht->capacity){
-            printf("cannot insert %s\n", str);
             return 0;
         }
     }
@@ -76,9 +75,9 @@ int linear_probing(htable ht, char *str){
     if (ht->freqs[fhash] == 1){ /* if freqs = 1 then this is the first item,
                                    not duplicate */
         ht->keys[fhash] = emalloc((strlen(str)+1) * sizeof ht->keys[0]);
-        ht->num_keys++;
         strcpy(ht->keys[fhash], str);
         ht->stats[ht->num_keys] = i;
+		ht->num_keys++;
     }
     return 1;
 }
@@ -95,17 +94,15 @@ int linear_probing(htable ht, char *str){
 int double_hash(htable ht, char *str){
     unsigned int fhash, h, g, k;
     int i=0; 
+	k = htable_word_to_int(str);
     for (;;){
-        /* convert to a number */
-        k = htable_word_to_int(str);
-        /* now hash! */
         h = k % ht->capacity;
         g = 1 + k % (ht->capacity -1);
         fhash = (h + (i * g)) % ht->capacity;
         if (ht->freqs[fhash] == 0){
-            break; /* found an empty slot */
+            break; 
         }else if (strcmp(ht->keys[fhash], str) == 0){ 
-            break; /* already contains this data */	
+            break; 	
         }else{
             i++;
         }
@@ -113,13 +110,12 @@ int double_hash(htable ht, char *str){
             return 0;
         }
     }
-    ht->num_keys++;
-    if (ht->freqs[fhash] == 1){ /* only increment num_keys if new item,
-                                   not duplicate */
+	ht->freqs[fhash]++;
+    if (ht->freqs[fhash] == 1){ 
         ht->stats[ht->num_keys] = i;
-        ht->freqs[fhash]++;
         ht->keys[fhash] = emalloc((strlen(str)+1) * sizeof ht->keys[0]);
         strcpy(ht->keys[fhash], str);
+		ht->num_keys++;
     }
     return 1;
 }
@@ -154,7 +150,6 @@ htable htable_new(int capacity, hashing_t t){
     result->capacity = capacity;
     result->num_keys = 0;
     result->stats = emalloc(capacity * sizeof result->stats[0]);
-    result->method = LINEAR_P;
     result->keys = emalloc(result->capacity * sizeof result->keys[0]);
     result->freqs = emalloc(result->capacity * sizeof result->freqs[0]);
     /* initialise freqs array to avoid uninialised error */
@@ -173,7 +168,7 @@ void htable_print(htable h, FILE *stream){
     int i;
     for (i=0; i<h->capacity; i++){
         if (h->freqs[i] > 0){
-            fprintf(stream, "%d    %s\n", h->freqs[i], h->keys[i]);
+            fprintf(stream, "%-5d%s\n", h->freqs[i], h->keys[i]);
         }
     }
 }

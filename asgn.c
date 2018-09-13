@@ -148,7 +148,7 @@ int main(int argc, char **argv){
                 htable_print(h, stdout);
             }else{
                 if (f.snapshot_count == 0){
-                    htable_print_stats(h, stdout, 100);
+                    htable_print_stats(h, stdout, 10);
                 }
                 else{
                     htable_print_stats(h, stdout, f.snapshot_count);
