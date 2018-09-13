@@ -4,7 +4,7 @@
 #include <getopt.h>
 #include "mylib.h"
 #include "htable.h"
-#include "bst.h"
+#include "tree.h"
 
 #define DEFAULT_TABLE_SIZE 113
 
@@ -33,7 +33,7 @@ int main(int argc, char **argv){
 	char option;
 	struct flags f;
         htable h;
-	bst b = NULL;
+	tree b = NULL;
         char word[256];
         int num_entries = 0;
 	/* Process command line options */
@@ -75,20 +75,20 @@ int main(int argc, char **argv){
 				f.table_size = atoi(optarg);
                                 break;
                         case 'h':
-                                print_help();
+                                print_help(argv[0]);
                                 return EXIT_SUCCESS;
                 }
         }
 
-        /* Setup the data structure (hash or bst/rbt) */
+        /* Setup the data structure (hash or tree/rbt) */
         if (f.tree == 0){
                 if (f.table_size > 0){
                        h = htable_new(find_greater_prime(f.table_size), f.hashing_method);
                 } else {
                         h = htable_new(DEFAULT_TABLE_SIZE, f.hashing_method);
                 }
-        } /* we do not need to setup the bst as this is done automatically when
-             bst_insert is called, if it is passed a NULL pointer. */
+        } /* we do not need to setup the tree as this is done automatically when
+             tree_insert is called, if it is passed a NULL pointer. */
 
         /* get words from stdin */
 	while (getword(word, sizeof word, stdin) != EOF){
@@ -96,14 +96,13 @@ int main(int argc, char **argv){
 		        htable_insert(h, word);
                 }else{
                         if (f.red_black == 1){
-                                b = bst_insert(b, word, RBT);
+                                b = tree_insert(b, word, RBT);
                         }else{
-                                b = bst_insert(b, word, BST);
+                                b = tree_insert(b, word, BST);
                         }
                 }
                 num_entries++;
-	}
-        
+	}        
         if (f.tree == 0){
                 if (f.entire_contents_printed == 1){
                         htable_print_entire_table(h);
@@ -118,14 +117,18 @@ int main(int argc, char **argv){
                                 htable_print_stats(h, stdout, f.snapshot_count);
                         }
                 }
-                htable_free(h);
         }else{
-		bst_preorder(b, bst_print_key);
+		tree_preorder(b, tree_print_key);
+                if (f.output_dot == 1){
+                        FILE *fptr;
+                        fptr = fopen("tree-view.dot", "w");
+                        tree_output_dot(b, fptr);
+                }
 	}
         if (f.tree == 0){
                 htable_free(h);
         }else{
-                bst_free(b);
+                tree_free(b);
         }
 
 	return EXIT_SUCCESS;

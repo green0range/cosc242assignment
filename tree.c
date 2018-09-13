@@ -1,16 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "bst.h"
+#include "tree.h"
 #include "mylib.h"
 #include <string.h>
 
 #define IS_BLACK(x) ((NULL == (x)) || (BLACK == (x)->colour))
 #define IS_RED(x) ((NULL !=(x)) && (RED == (x)->colour))
 
-struct bstnode{
+struct treenode{
 	char *key;
-	bst left;
-	bst right;
+	tree left;
+	tree right;
         int freq;
         tree_t type;
         rbt_colour colour;
@@ -19,7 +19,7 @@ struct bstnode{
 /* Finds are returns the leftmost child.
  * This can be used to find the successor
  * by inputting the right subtree. */
-bst get_left_most_child(bst b){
+tree get_left_most_child(tree b){
         if (b->left == NULL){
                 return b;
         }else{
@@ -27,18 +27,18 @@ bst get_left_most_child(bst b){
         }
 }
 
-/* Delete by key value. Input the bst and key value to be
+/* Delete by key value. Input the tree and key value to be
  * deleted and the subnode with that key value will be deleted
  * and given root returned. */
-bst bst_delete(bst b, char *str){
-        bst tmp;
-        if (bst_search(b, str) == 0){
+tree tree_delete(tree b, char *str){
+        tree tmp;
+        if (tree_search(b, str) == 0){
                 return b; /* nothing to delete */
         }else if(strcmp(b->key, str) < 0){
-                b->right = bst_delete(b->right, str);
+                b->right = tree_delete(b->right, str);
                 return b;
         }else if(strcmp(b->key, str) > 0){
-                b->left = bst_delete(b->left, str);
+                b->left = tree_delete(b->left, str);
                 return b;
         }else{
                 /* If current node is a leaf, free it */
@@ -63,64 +63,62 @@ bst bst_delete(bst b, char *str){
                 else{
                         tmp = get_left_most_child(b->right);
                         strcpy(b->key, tmp->key);
-                        b->right = bst_delete(b->right, tmp->key);
+                        b->right = tree_delete(b->right, tmp->key);
                 }
         }
         return b;
 }
 
 /* Deletes every node, freeing them as it goes. */
-bst bst_free(bst b){
+tree tree_free(tree b){
         if (b == NULL){
                 return NULL;
         }else{
-                return bst_free(bst_delete(b, b->key));
+                return tree_free(tree_delete(b, b->key));
         }
 }
 
-void bst_inorder(bst b, void f(char *str, int a)){
+void tree_inorder(tree b, void f(char *str, int a)){
     if (b != NULL){
-		bst_inorder(b->left, f);
+		tree_inorder(b->left, f);
 		f(b->key, b->freq);
-		bst_inorder(b->right, f);
+		tree_inorder(b->right, f);
     }
 }
 
-void bst_preorder(bst b, void f(char *str, int a)){
+void tree_preorder(tree b, void f(char *str, int a)){
 	if (b != NULL){
 		f(b->key, b->freq);
-		bst_preorder(b->left, f);
-		bst_preorder(b->right, f);
+		tree_preorder(b->left, f);
+		tree_preorder(b->right, f);
 	}
 }
 
-/* return the right rotation of r */
-bst right_rotate(bst r){
-        bst tmp = r;
-        bst tmp2 = NULL;
-        r = r->left;
-        tmp2 = r->right;
-        r->right = tmp;
-        r->right->left = tmp2;
-        return r;
+tree right_rotate(tree t)
+{
+    tree tmp = t;
+    t = t->left;
+    tmp->left = t->right;
+    t->right = tmp;
+    return t;
 }
 
-/* return the left rotation of r */
-bst left_rotate(bst r){
-        bst tmp = r;
-        bst tmp2;
-        r = r->left;
-        tmp2 = r->right;
-        r->left = tmp;
-        r->left->right = tmp2;
-        return r;
+tree left_rotate(tree t)
+{
+    tree tmp = t;
+    t = t->right;
+    tmp->right = t->left;
+    t->left = tmp;
+    return t;
 }
 
-/* This restores the red black conditions of the bst.
+
+
+/* This restores the red black conditions of the tree.
  *
  * @param b red black binary search tree to fix.
  */
-bst rbt_fixup(bst r){
+tree rbt_fixup(tree r){
         printf("fixup key: %s\n", r->key);
         /* Case 1: if left child and left's left child are red */
         if (IS_RED(r->left) && IS_RED(r->left->left)){
@@ -175,18 +173,18 @@ bst rbt_fixup(bst r){
         return r;
 }
 
-bst bst_insert(bst b, char *str, tree_t t){
+tree tree_insert(tree b, char *str, tree_t t){
 	if (b == NULL){ /* empty tree, base case */
-	        b = bst_new(t);
+	        b = tree_new(t);
 		b->key = emalloc((strlen(str)+1) * sizeof b->key[0]);
                 strcpy(b->key, str);
                 b->freq = 1;
                 b->colour = RED;
 		return b;
 	}else if (strcmp(b->key, str) < 0){
-		b->right = bst_insert(b->right, str, t);
+		b->right = tree_insert(b->right, str, t);
 	}else if (strcmp(b->key, str) > 0){
-		b->left = bst_insert(b->left, str, t);
+		b->left = tree_insert(b->left, str, t);
 	}else{
 		/* we have a duplicated item, increase freq */
                 b->freq++;
@@ -197,8 +195,8 @@ bst bst_insert(bst b, char *str, tree_t t){
         return b;
 }
 
-bst bst_new(tree_t t){
-        bst result = emalloc(sizeof *result);
+tree tree_new(tree_t t){
+        tree result = emalloc(sizeof *result);
         result->left = NULL;
         result->right = NULL;
         result->key = NULL;
@@ -207,18 +205,59 @@ bst bst_new(tree_t t){
         return result;
 }
 
-int bst_search(bst b, char *str){
+int tree_search(tree b, char *str){
 	if (b == NULL){
 		return 0;
 	}else if (strcmp(str, b->key) == 0){
 		return 1;
 	}else if (strcmp(str, b->key) > 0){
-		return bst_search(b->right, str);
+		return tree_search(b->right, str);
 	}else{
-		return bst_search(b->left, str);
+		return tree_search(b->left, str);
 	}
 }
 
-void bst_print_key(char *s, int f){
+/**
+ * Traverses the tree writing a DOT description about connections, and
+ * possibly colours, to the given output stream.
+ *
+ * @param t the tree to output a DOT description of.
+ * @param out the stream to write the DOT output to.
+ */
+static void tree_output_dot_aux(tree t, FILE *out) {
+   if(t->key != NULL) {
+      fprintf(out, "\"%s\"[label=\"{<f0>%s:%d|{<f1>|<f2>}}\"color=%s];\n",
+              t->key, t->key, t->freq,
+              (RBT == t->type && RED == t->colour) ? "red":"black");
+   }
+   if(t->left != NULL) {
+      tree_output_dot_aux(t->left, out);
+      fprintf(out, "\"%s\":f1 -> \"%s\":f0;\n", t->key, t->left->key);
+   }
+   if(t->right != NULL) {
+      tree_output_dot_aux(t->right, out);
+      fprintf(out, "\"%s\":f2 -> \"%s\":f0;\n", t->key, t->right->key);
+   }
+}
+
+/**
+ * Output a DOT description of this tree to the given output stream.
+ * DOT is a plain text graph description language (see www.graphviz.org).
+ * You can create a viewable graph with the command
+ *
+ *    dot -Tpdf < graphfile.dot > graphfile.pdf
+ *
+ * You can also use png, ps, jpg, svg... instead of pdf
+ *
+ * @param t the tree to output the DOT description of.
+ * @param out the stream to write the DOT description to.
+ */
+void tree_output_dot(tree t, FILE *out) {
+   fprintf(out, "digraph tree {\nnode [shape = Mrecord, penwidth = 2];\n");
+   tree_output_dot_aux(t, out);
+   fprintf(out, "}\n");
+}
+
+void tree_print_key(char *s, int f){
 	printf("%d    %s\n",f, s);
 }
