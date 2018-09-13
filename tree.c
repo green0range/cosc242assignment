@@ -113,13 +113,6 @@ void tree_inorder(tree b, void f(char *str, int a)){
  */
 void tree_preorder(tree b, void f(char *str, int a)){
     if (b != NULL){
-        if (b->type == RBT){
-            if (IS_BLACK(b)){
-                printf("black: ");
-            }else{
-                printf("red: ");
-            }
-        }
         f(b->key, b->freq);
         tree_preorder(b->left, f);
         tree_preorder(b->right, f);
@@ -222,6 +215,16 @@ static tree tree_fix(tree t){
         }
     }
     return t;
+}
+
+/* Makes the node black. This should be called on the root node after each
+ * insertion.
+ *
+ * @param t the node to turn black
+ */
+tree tree_make_black(tree t){
+	t->colour = BLACK;
+	return t
 }
 
 /* Tree insert function. Allocates memory.
