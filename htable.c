@@ -15,7 +15,7 @@ struct htablerec {
 
 /* Frees the entire hash table from memory.
  *
- * @params h the htable to free
+ * @param h the htable to free
  */
 void htable_free(htable h){
     int i;
@@ -30,10 +30,12 @@ void htable_free(htable h){
     free(h);
 }
 
-/* Convert as a word to a integer.
- * This lets it be used a a htable key
+/* Converts a word to a integer.
+ * This lets it be used as a htable key
  *
  * @param word pointer to an array of chars to convert
+ *
+ * @return integer converted from word
  */
 static unsigned int htable_word_to_int(char *word){
     unsigned int result = 0;
@@ -71,7 +73,7 @@ int linear_probing(htable ht, char *str){
         }
     }
     ht->freqs[fhash]++;
-    if (ht->freqs[fhash] == 1){ /* If freqs = 1 then this is the first item,
+    if (ht->freqs[fhash] == 1){ /* if freqs = 1 then this is the first item,
                                    not duplicate */
         ht->keys[fhash] = emalloc((strlen(str)+1) * sizeof ht->keys[0]);
         ht->num_keys++;
@@ -94,7 +96,7 @@ int double_hash(htable ht, char *str){
     unsigned int fhash, h, g, k;
     int i=0; 
     for (;;){
-        /* Convert to a number */
+        /* convert to a number */
         k = htable_word_to_int(str);
         /* now hash! */
         h = k % ht->capacity;
@@ -128,8 +130,8 @@ int double_hash(htable ht, char *str){
  * linear_probing or double_hash depending
  * on the set options
  *
- * @param ht The hash table to insert into
- * @param str The string to insert
+ * @param ht the hash table to insert into
+ * @param str the string to insert
  */
 int htable_insert(htable ht, char *str){
     if (ht->method == LINEAR_P){
@@ -141,7 +143,10 @@ int htable_insert(htable ht, char *str){
 
 /* Creates and return a new htable.
  *
- * @param capacity maximum size of the hash table.
+ * @param capacity maximum size of the hash table
+ * @param t for emalloc
+ *
+ * @return new htable
  */
 htable htable_new(int capacity, hashing_t t){
     int i;
@@ -160,10 +165,11 @@ htable htable_new(int capacity, hashing_t t){
     return result;
 }
 
-void htable_set_double_hashing(htable h){
-    h->method = DOUBLE_H;
-}
-
+/* Collects information on state of a hash table.
+ *
+ * @param h the hash table
+ * @param stream pointer to where information is stored
+ */
 void htable_print(htable h, FILE *stream){
     int i;
     for (i=0; i<h->capacity; i++){
@@ -174,7 +180,7 @@ void htable_print(htable h, FILE *stream){
 }
 
 /* Searches for a particular word in the hash table.
- * Returns 1 if found, 0 if not.
+ * Returns 1 if found, 0 if not
  *
  * @param ht htable to search in
  * @param str string to search for
@@ -205,9 +211,9 @@ int htable_search(htable ht, char *str){
 }
 
 /* Prints the entire hash table.
- * Each entry is printed on a new line.
+ * Each entry is printed on a new line
  * 
- * @params h the hash table to print
+ * @param h the hash table to print
  */
 void htable_print_entire_table(htable h){
     int i = 0;
@@ -226,11 +232,11 @@ void htable_print_entire_table(htable h){
 /* Prints out a line of data from the hash table to reflect the state
  * the table was in when it was a certain percentage full.
  * Note: If the hashtable is less full than percent_full then no data
- * will be printed.
+ * will be printed
  *
- * @param h - the hash table.
- * @param stream - a stream to print the data to.
- * @param percent_full - the point at which to show the data from.
+ * @param h - the hash table
+ * @param stream - a stream to print the data to
+ * @param percent_full - the point at which to show the data from
  */
 static void print_stats_line(htable h, FILE *stream, int percent_full) {
     int current_entries = h->capacity * percent_full / 100;
@@ -261,15 +267,15 @@ static void print_stats_line(htable h, FILE *stream, int percent_full) {
  * hashtable was being built.
  *
  * @li Percent At Home - how many keys were placed without a collision
- * occurring.
+ * occurring
  * @li Average Collisions - how many collisions have occurred on
- *  average while placing all of the keys so far.
+ * average while placing all of the keys so far
  * @li Maximum Collisions - the most collisions that have occurred
- * while placing a key.
+ * while placing a key
  *
- * @param h the hashtable to print statistics summary from.
- * @param stream the stream to send output to.
- * @param num_stats the maximum number of statistical snapshots to print.
+ * @param h the hashtable to print statistics summary from
+ * @param stream the stream to send output to
+ * @param num_stats the maximum number of statistical snapshots to print
  */
 void htable_print_stats(htable h, FILE *stream, int num_stats) {
     int i;
