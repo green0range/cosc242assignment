@@ -6,12 +6,13 @@
 
 #define DEFAULT_TABLE_SIZE 113
 
-/* Function for getting words from file
+/* Getword function to read words from stdin.
  *
- * @param s
- * @param limit
- * @param stream
- * @return
+ * @param s word entered using stdin
+ * @param limit to number of words
+ * @param stream file from which words are read
+ *
+ * @return word that can be read as a string
  */
 int getword(char *s, int limit, FILE *stream){
     int c;
@@ -37,9 +38,9 @@ int getword(char *s, int limit, FILE *stream){
     return w-s;
 }
 
-/* Determines if a number is a prime.
+/* Determines if a number is prime.
  *
- * @param p the integer to be checked
+ * @param p the number to be checked
  */
 int is_prime(int p){
     int i;
@@ -51,9 +52,11 @@ int is_prime(int p){
     return 1;
 }
 
-/* Returns a prime number greater than n.
+/* Returns a prime number greater than or equal to n.
  *
  * @param n the number the prime must be >= to
+ *
+ * @return the next prime number >= n
  */
 int find_greater_prime(int n){
     int i = n;
@@ -64,18 +67,21 @@ int find_greater_prime(int n){
     return i;
 }
 
-/* Returns the table size to use */
+/* Returns the table size to use.
+ *
+ * @param s initial size of table
+ */
 int table_size(int s){
-	if (s == 0){
-		return DEFAULT_TABLE_SIZE;
-	}else{
-		return find_greater_prime(s);
-	}
+    if (s == 0){
+        return DEFAULT_TABLE_SIZE;
+    }else{
+        return find_greater_prime(s);
+    }
 }
 
 /* Function prints user options for command line arguments.
  *
- * @param prog_name pointer to charthe name of our program
+ * @param prog_name char pointer to the name of our program
  */
 void print_help(char *prog_name){
     printf("Usage: %s [OPTIONS]... <STDIN>\n", prog_name);
@@ -102,9 +108,9 @@ void print_help(char *prog_name){
     printf("\n");
 }
 
-/* Standard *emalloc function.
+/* Standard emalloc function to allocate memory.
  *
- * @param s
+ * @param s size of memory to be allocated
  */
 void *emalloc(size_t s){
     void *result = malloc(s);
@@ -115,10 +121,10 @@ void *emalloc(size_t s){
     return result;
 }
 
-/* Standard *erealloc function.
+/* Standard erealloc function to reallocate memory.
  *
- * @param p
- * @param s
+ * @param p pointer to be reallocated
+ * @param s size of memory to be reallocated
  */
 void *erealloc(void *p, size_t s){
     void *result = realloc(p, s);
