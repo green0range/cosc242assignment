@@ -24,8 +24,8 @@ struct flags {
 
 /* Main method.
  *
- * @param argc total number of cmd arguments.
- * @param argv array of cmd arguments.
+ * @param argc total number of cmd arguments
+ * @param argv array of cmd arguments
  */
 int main(int argc, char **argv){
     const char *optstring = "Tc:deoprs:t:h";
@@ -34,15 +34,15 @@ int main(int argc, char **argv){
     htable h;
     tree b = NULL;
     char word[256];
-	FILE *fptr;
-	int unknown_word_count = 0;
-	double fill_time = 0.0;
-	double search_time = 0.0;
-	clock_t start, end;
-    /* Process command line options */
+    FILE *fptr;
+    int unknown_word_count = 0;
+    double fill_time = 0.0;
+    double search_time = 0.0;
+    clock_t start, end;
+    /* process command line options */
     f.tree = 0;
     f.hashing_method = LINEAR_P;
-	f.check_file = NULL;
+    f.check_file = NULL;
     f.entire_contents_printed = 0;
     f.output_dot = 0;
     f.print_stats = 0;
@@ -55,8 +55,9 @@ int main(int argc, char **argv){
                 f.tree = 1;
                 break;
             case 'c':
-                f.check_file = emalloc((strlen(optarg)+1) * sizeof f.check_file[0]);
-				strcpy(f.check_file, optarg);
+                f.check_file = emalloc((strlen(optarg)+1) *
+                                       sizeof f.check_file[0]);
+                strcpy(f.check_file, optarg);
                 break;
             case 'd':
                 f.hashing_method = DOUBLE_H;
@@ -80,86 +81,87 @@ int main(int argc, char **argv){
                 f.table_size = atoi(optarg);
                 break;
             case 'h':
-			default:
+            default:
                 print_help(argv[0]);
                 return EXIT_SUCCESS;
         }
     }
 
-    /* Setup the data structure (hash or tree/rbt) */
+    /* setup the data structure (hash or tree/rbt) */
     if (f.tree == 0){
-		h = htable_new(table_size(f.table_size), f.hashing_method);
+        h = htable_new(table_size(f.table_size), f.hashing_method);
     } /* we do not need to setup the tree as this is done automatically when
          tree_insert is called, if it is passed a NULL pointer. */
     
     /* get words from stdin */
     while (getword(word, sizeof word, stdin) != EOF){
         if (f.tree == 0){
-			start = clock();
+            start = clock();
             htable_insert(h, word);
-			end = clock();
+            end = clock();
         }else{
-			start = clock();
-			b = tree_insert(b, word, f.red_black);
-			end = clock();
+            start = clock();
+            b = tree_insert(b, word, f.red_black);
+            b = tree_make_black(b);
+            end = clock();
         }
-		fill_time += (end - start)/(double)CLOCKS_PER_SEC;
+        fill_time += (end - start)/(double)CLOCKS_PER_SEC;
     } 
-	if (f.check_file != NULL){
-		/* read file into another function then search and match words */
-		if (NULL == (fptr = fopen(f.check_file, "r"))){
-			fprintf(stderr, "Can't open file '%s' using mode r.\n", f.check_file);
-			return EXIT_FAILURE;
-		}
-		while (getword(word, sizeof word, fptr) != EOF){
-			if (f.tree == 0){
-				start = clock();
-				if (htable_search(h, word) == 0){
-					end = clock();
-					fprintf(stderr, "%s\n", word);
-					unknown_word_count++;
-				}else{
-					end = clock();
-				}
-			}else{
-				start = clock();
-				if (tree_search(b, word) == 0){
-					end = clock();
-					fprintf(stderr, "%s\n", word);
-					unknown_word_count++;
-				}else{
-					end = clock();
-				}
-			}
-			search_time += (end - start)/(double)CLOCKS_PER_SEC;
-		} 
-		printf("Fill time     : %f\n", fill_time);
-		printf("Search time   : %f\n", search_time);
-		printf("Unknown words = %d\n", unknown_word_count);
+    if (f.check_file != NULL){
+        /* read file into another function then search and match words */
+        if (NULL == (fptr = fopen(f.check_file, "r"))){
+            fprintf(stderr, "Can't open file '%s' using mode r.\n", f.check_file);
+            return EXIT_FAILURE;
+        }
+        while (getword(word, sizeof word, fptr) != EOF){
+            if (f.tree == 0){
+                start = clock();
+                if (htable_search(h, word) == 0){
+                    end = clock();
+                    fprintf(stderr, "%s\n", word);
+                    unknown_word_count++;
+                }else{
+                    end = clock();
+                }
+            }else{
+                start = clock();
+                if (tree_search(b, word) == 0){
+                    end = clock();
+                    fprintf(stderr, "%s\n", word);
+                    unknown_word_count++;
+                }else{
+                    end = clock();
+                }
+            }
+            search_time += (end - start)/(double)CLOCKS_PER_SEC;
+        } 
+        printf("Fill time     : %f\n", fill_time);
+        printf("Search time   : %f\n", search_time);
+        printf("Unknown words = %d\n", unknown_word_count);
 
-	}else{
-	    if (f.tree == 0){
-	        if (f.entire_contents_printed == 1){
-	            htable_print_entire_table(h);
-	        }
-	        if (f.print_stats == 0){
-	            htable_print(h, stdout);
-	        }else{
-	            if (f.snapshot_count == 0){
-	                htable_print_stats(h, stdout, 100);
-	            }
-	            else{
-	                htable_print_stats(h, stdout, f.snapshot_count);
-	            }
-	        }
-	    }else{
+    }else{
+        if (f.tree == 0){
+            if (f.entire_contents_printed == 1){
+                htable_print_entire_table(h);
+            }
+            if (f.print_stats == 0){
+                htable_print(h, stdout);
+            }else{
+                if (f.snapshot_count == 0){
+                    htable_print_stats(h, stdout, 100);
+                }
+                else{
+                    htable_print_stats(h, stdout, f.snapshot_count);
+                }
+            }
+        }else{
             if (f.output_dot == 1){
-				fptr = fopen("tree-view.dot", "w");
-				tree_output_dot(b, fptr);
-			}
-			tree_preorder(b, tree_print_key);
-		}
-	}
+                fptr = fopen("tree-view.dot", "w");
+                tree_output_dot(b, fptr);
+            }
+            tree_preorder(b, tree_print_key);
+        }
+    }
     if (f.tree == 0){
         htable_free(h);
     }else{
